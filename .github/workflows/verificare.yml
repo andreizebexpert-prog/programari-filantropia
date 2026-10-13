@@ -2,7 +2,7 @@ name: Verificare programari Filantropia
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    - cron: "*/10 * * * *"   # porneste o rulare la ~10 min; fiecare verifica la fiecare minut ~9 min
   workflow_dispatch:
     inputs:
       specialty:
@@ -19,12 +19,13 @@ permissions:
   contents: write
 
 concurrency:
-  group: verificare
+  group: verificare-${{ inputs.doctor || 'principal' }}
   cancel-in-progress: false
 
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -33,15 +34,23 @@ jobs:
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          WHATSAPP_PHONE: ${{ secrets.WHATSAPP_PHONE }}
+          WHATSAPP_APIKEY: ${{ secrets.WHATSAPP_APIKEY }}
           SPECIALTY: ${{ inputs.specialty }}
           SERVICE: ${{ inputs.service }}
           DOCTOR: ${{ inputs.doctor }}
           TEST_MODE: ${{ inputs.doctor }}
 
       - name: Salveaza starea
-        if: ${{ !inputs.doctor }}
+        if: ${{ always() && !inputs.doctor }}
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
-          git add state.json
-          git diff --cached --quiet || (git commit -m "Actualizare stare" && git push)
+          git add state.json 2>/dev/null || exit 0
+          git diff --cached --quiet && exit 0
+          git commit -m "Actualizare stare"
+          git pull --rebase -X theirs || true
+          git push
