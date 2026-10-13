@@ -16,10 +16,11 @@ import urllib.request
 from datetime import datetime, timezone
 
 # --- Configurare ---------------------------------------------------------
-SPECIALTY = 10   # Obstetrica-Ginec.
-SERVICE = 56     # Consult Ambulatoriu CNAS + ecografie CNAS
-DOCTOR = 2153    # Dr. MUSTATA LAURA MIHAELA
-DOCTOR_NAME = "Dr. Mustață Laura Mihaela"
+SPECIALTY = os.environ.get("SPECIALTY") or "10"   # Obstetrica-Ginec.
+SERVICE = os.environ.get("SERVICE") or "56"        # Consult CNAS + ecografie
+DOCTOR = os.environ.get("DOCTOR") or "2153"        # Dr. MUSTATA LAURA MIHAELA
+# Mod test: ruleaza pe alt medic, nu tine cont de stare si nu o salveaza.
+TEST_MODE = bool(os.environ.get("TEST_MODE"))
 # -------------------------------------------------------------------------
 
 BASE = "https://programare.spitalulfilantropia.ro"
@@ -53,7 +54,11 @@ def parse(page):
     plus numarul total de zile gasite (pentru verificare)."""
     cards = page.split('class="doctor-card-item')[1:]
     available = {}
+    doctor_name = ""
     for card in cards:
+        name = re.search(r"<h3[^>]*>([^<]+)</h3>", card)
+        if name and not doctor_name:
+            doctor_name = html.unescape(name.group(1)).strip()
         m = re.search(r'data-card-id="([^"]+)"', card)
         if not m:
             continue
@@ -69,7 +74,7 @@ def parse(page):
         times = re.findall(r"\b\d{1,2}:\d{2}\b", text)
         available[date] = {"label": label,
                            "slots": times or [text[:200] or "(interval nou)"]}
-    return available, len(cards)
+    return available, len(cards), doctor_name
 
 
 def send_telegram(message):
@@ -95,7 +100,7 @@ def load_state():
 
 def main():
     page = fetch(API_URL)
-    available, total = parse(page)
+    available, total, doctor_name = parse(page)
     if total == 0:
         # Pagina nu mai arata cum ne asteptam -> run-ul pica si GitHub
         # trimite email, ca sa stii ca trebuie verificat scriptul.
@@ -104,19 +109,26 @@ def main():
 
     print(f"{total} zile verificate, {len(available)} cu locuri libere.")
 
-    state = load_state()
+    state = {} if TEST_MODE else load_state()
     seen = state.get("notified", {})
     new = {d: v for d, v in available.items()
            if set(v["slots"]) - set(seen.get(d, []))}
 
     if new:
-        lines = [f"🩺 <b>Locuri libere la {DOCTOR_NAME}</b>", ""]
+        title = f"Locuri libere la {doctor_name or 'medicul urmărit'}"
+        if TEST_MODE:
+            title = "[TEST] " + title
+        lines = [f"🩺 <b>{html.escape(title)}</b>", ""]
         for d in sorted(new):
             lines.append(f"• <b>{new[d]['label']}</b>: "
                          + ", ".join(new[d]["slots"]))
         lines += ["", f'<a href="{PAGE_URL}">Deschide pagina de programări</a>']
         send_telegram("\n".join(lines))
         print("Notificare trimisă.")
+
+    if TEST_MODE:
+        print("Mod test: starea nu a fost salvată.")
+        return
 
     # Tinem minte doar ce e liber acum: daca un loc se ocupa si apoi se
     # elibereaza din nou, primesti iar notificare.
