@@ -4,6 +4,16 @@ on:
   schedule:
     - cron: "*/10 * * * *"
   workflow_dispatch:
+    inputs:
+      specialty:
+        description: "TEST - specialty (lasa gol pentru verificarea normala)"
+        required: false
+      service:
+        description: "TEST - service"
+        required: false
+      doctor:
+        description: "TEST - doctor"
+        required: false
 
 permissions:
   contents: write
@@ -23,8 +33,13 @@ jobs:
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SPECIALTY: ${{ inputs.specialty }}
+          SERVICE: ${{ inputs.service }}
+          DOCTOR: ${{ inputs.doctor }}
+          TEST_MODE: ${{ inputs.doctor }}
 
       - name: Salveaza starea
+        if: ${{ !inputs.doctor }}
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
