@@ -2,7 +2,11 @@ name: Verificare programari Filantropia
 
 on:
   schedule:
-    - cron: "*/10 * * * *"   # porneste o rulare la ~10 min; fiecare verifica la fiecare minut ~9 min
+    # Porneste o rulare la ~10 minute. Fiecare rulare sta activa ~25 minute,
+    # verifica site-ul la fiecare minut si raspunde la comenzile din Telegram.
+    # Urmatoarea rulare asteapta la coada si porneste imediat cand se termina
+    # cea curenta, deci verificarea e practic continua.
+    - cron: "*/10 * * * *"
   workflow_dispatch:
     inputs:
       specialty:
@@ -25,7 +29,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
 
