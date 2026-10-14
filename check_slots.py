@@ -114,7 +114,7 @@ def parse(page):
         if NO_SLOTS in slots_html:
             continue
         text = strip_tags(slots_html.split(">", 1)[1])
-        times = re.findall(r"\b\d{1,2}:\d{2}\b", text)
+        times = list(dict.fromkeys(re.findall(r"\b\d{1,2}:\d{2}\b", text)))
         available[date] = {"label": label,
                            "slots": times or [text[:200] or "(interval nou)"]}
     return available, len(cards), doctor_name
@@ -159,6 +159,12 @@ def send_email(subject, lines, link):
     msg["From"] = user
     msg["To"] = ", ".join(recipients)
     msg.set_content("\n".join(lines + ["", f"Programare: {link}"]))
+    body = "<br>".join(html.escape(l) for l in lines)
+    msg.add_alternative(
+        f'<div style="font-family:Arial,sans-serif;font-size:15px;'
+        f'line-height:1.5">{body}<br><br>'
+        f'<a href="{link}">Deschide pagina de programări</a></div>',
+        subtype="html")
     with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=30) as s:
         s.login(user, password.replace(" ", ""))
         refused = s.send_message(msg, to_addrs=recipients)
@@ -270,16 +276,22 @@ def check_doctor(doc, state):
             subject = f"{prefix}Locuri libere la {name}"
         else:
             subject = f"{prefix}S-au ocupat locuri la {name}"
-        lines = []
+        all_lines = [f"• {available[d]['label']}: "
+                     + ", ".join(available[d]["slots"])
+                     for d in sorted(available)]
+        sections = []
         if new_lines:
-            lines += ["✅ Locuri noi libere:"] + new_lines
+            sections.append(["🆕 Au apărut:"] + new_lines)
         if gone_lines:
-            lines += ([""] if lines else []) + ["❌ Nu mai sunt libere:"]
-            lines += gone_lines
-        if available:
-            lines += ["", "Liber acum:"] + [
-                f"• {available[d]['label']}: "
-                + ", ".join(available[d]["slots"]) for d in sorted(available)]
+            sections.append(["❌ S-au ocupat:"] + gone_lines)
+        # Lista completa doar daca spune ceva in plus fata de "Au aparut"
+        if all_lines and all_lines != new_lines:
+            sections.append(["📅 Toate locurile libere acum:"] + all_lines)
+        elif not all_lines:
+            sections.append(["Nu mai este niciun loc liber."])
+        lines = []
+        for sec in sections:
+            lines += ([""] if lines else []) + sec
         result["notify_errors"] = notify(subject, lines, page_url(doc))
 
     doc_state["seen"] = available
