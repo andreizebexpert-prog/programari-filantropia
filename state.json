@@ -3,6 +3,12 @@
     "1641": {
       "name": "Dr. CANE EUGEN",
       "seen": {
+        "2026-10-16": {
+          "label": "Vineri, 16 Octombrie",
+          "slots": [
+            "10:00"
+          ]
+        },
         "2026-11-24": {
           "label": "Marți, 24 Noiembrie",
           "slots": [
