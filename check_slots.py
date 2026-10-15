@@ -34,7 +34,6 @@ except Exception:                                   # pragma: no cover
 # ...appointment?specialty=XX&service=YY&doctor=ZZZZ
 DOCTORS = [
     {"doctor": "2153", "specialty": "10", "service": "56"},  # Dr. Mustata
-    {"doctor": "1641", "specialty": "10", "service": "56"},  # temporar
 ]
 # Cat timp sta activa o rulare si cat de des verifica site-ul in ea.
 LOOP_MINUTES = float(os.environ.get("LOOP_MINUTES") or 25)
