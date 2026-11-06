@@ -38,16 +38,9 @@
     "2153": {
       "name": "Dr. MUSTATA LAURA MIHAELA",
       "seen": {
-        "2026-11-23": {
-          "label": "Luni, 23 Noiembrie",
-          "slots": [
-            "08:30"
-          ]
-        },
         "2026-11-26": {
           "label": "Joi, 26 Noiembrie",
           "slots": [
-            "12:00",
             "12:15"
           ]
         },
@@ -91,5 +84,5 @@
     }
   },
   "heartbeat": "2026-11",
-  "telegram_offset": 748087112
+  "telegram_offset": 748087113
 }
