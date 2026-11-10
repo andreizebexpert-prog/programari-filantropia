@@ -37,14 +37,7 @@
     },
     "2153": {
       "name": "MUSTATA LAURA MIHAELA",
-      "seen": {
-        "2026-11-26": {
-          "label": "Joi, 26 Noiembrie",
-          "slots": [
-            "11:30"
-          ]
-        }
-      }
+      "seen": {}
     }
   },
   "heartbeat": "2026-11",
