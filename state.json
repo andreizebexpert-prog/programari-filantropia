@@ -37,7 +37,14 @@
     },
     "2153": {
       "name": "MUSTATA LAURA MIHAELA",
-      "seen": {}
+      "seen": {
+        "2026-12-14": {
+          "label": "Luni, 14 Decembrie",
+          "slots": [
+            "10:15"
+          ]
+        }
+      }
     }
   },
   "heartbeat": "2026-11",
