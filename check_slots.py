@@ -36,8 +36,8 @@ DOCTORS = [
     {"doctor": "2153", "specialty": "10", "service": "56"},  # Dr. Mustata
 ]
 # Cat timp sta activa o rulare si cat de des verifica site-ul in ea.
-LOOP_MINUTES = float(os.environ.get("LOOP_MINUTES") or 25)
-INTERVAL_SECONDS = 60
+LOOP_MINUTES = float(os.environ.get("LOOP_MINUTES") or 55)
+INTERVAL_SECONDS = int(os.environ.get("INTERVAL_SECONDS") or 30)
 # Mod test (din "Run workflow"): o singura verificare pe alt medic, fara stare.
 TEST_MODE = bool(os.environ.get("TEST_MODE"))
 if TEST_MODE:
