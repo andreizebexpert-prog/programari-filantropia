@@ -2,11 +2,9 @@ name: Verificare programari Filantropia
 
 on:
   schedule:
-    # Porneste o rulare la ~10 minute. Fiecare rulare sta activa ~25 minute,
-    # verifica site-ul la fiecare minut si raspunde la comenzile din Telegram.
-    # Urmatoarea rulare asteapta la coada si porneste imediat cand se termina
-    # cea curenta, deci verificarea e practic continua.
-    - cron: "*/10 * * * *"
+    # Doar plasa de siguranta: porneste lantul din nou daca s-a oprit.
+    # GitHub ruleaza aceste programari foarte neregulat (uneori la ore distanta).
+    - cron: "*/15 * * * *"
   workflow_dispatch:
     inputs:
       specialty:
@@ -21,6 +19,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: verificare-${{ inputs.doctor || 'principal' }}
@@ -29,7 +28,7 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 70
     steps:
       - uses: actions/checkout@v4
 
@@ -43,6 +42,8 @@ jobs:
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
           WHATSAPP_PHONE: ${{ secrets.WHATSAPP_PHONE }}
           WHATSAPP_APIKEY: ${{ secrets.WHATSAPP_APIKEY }}
+          LOOP_MINUTES: "55"
+          INTERVAL_SECONDS: "30"
           SPECIALTY: ${{ inputs.specialty }}
           SERVICE: ${{ inputs.service }}
           DOCTOR: ${{ inputs.doctor }}
@@ -58,3 +59,10 @@ jobs:
           git commit -m "Actualizare stare"
           git pull --rebase -X theirs || true
           git push
+
+      # Porneste imediat urmatoarea rulare, ca verificarea sa nu aiba pauze.
+      - name: Porneste urmatoarea rulare
+        if: ${{ always() && !inputs.doctor && !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run verificare.yml --ref "${{ github.ref_name }}"
